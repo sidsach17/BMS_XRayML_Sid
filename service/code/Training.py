@@ -18,7 +18,7 @@ resource_group = config["resource_group"]
 subscription_id = config["subscription_id"]
 location = config["location"]
 
-cli_auth = AzureCliAuthentication()
+#cli_auth = AzureCliAuthentication()
 
 
 # Get workspace
@@ -26,8 +26,8 @@ cli_auth = AzureCliAuthentication()
 ws = Workspace.get(
         name=workspace_name,
         subscription_id=subscription_id,
-        resource_group=resource_group,
-        auth=cli_auth
+        resource_group=resource_group
+        #auth=cli_auth
     )
 
 # Attach Experiment

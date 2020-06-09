@@ -14,14 +14,14 @@ resource_group = config["resource_group"]
 subscription_id = config["subscription_id"]
 location = config["location"]
 
-cli_auth = AzureCliAuthentication()
+#cli_auth = AzureCliAuthentication()
 
 try:
     ws = Workspace.get(
         name=workspace_name,
         subscription_id=subscription_id,
-        resource_group=resource_group,
-        auth=cli_auth
+        resource_group=resource_group
+        #auth=cli_auth
     )
 
 except:
@@ -32,8 +32,8 @@ except:
         subscription_id=subscription_id,
         resource_group=resource_group,
         # create_resource_group=True,
-        location=location,
-        auth=cli_auth
+        location=location
+        #auth=cli_auth
 
     )
 

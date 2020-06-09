@@ -1,6 +1,28 @@
 from azureml.core.compute import ComputeTarget, AmlCompute
 from azureml.core.compute_target import ComputeTargetException
+import json
 
+with open("./configuration/config.json") as f:
+    config = json.load(f)
+
+workspace_name = config["workspace_name"]
+resource_group = config["resource_group"]
+subscription_id = config["subscription_id"]
+location = config["location"]
+
+#cli_auth = AzureCliAuthentication()
+
+
+# Get workspace
+#ws = Workspace.from_config(auth=cli_auth)
+ws = Workspace.get(
+        name=workspace_name,
+        subscription_id=subscription_id,
+        resource_group=resource_group
+        #auth=cli_auth
+    )
+    
+    
 #Creating CPU cluster
 cpu_cluster_name = "cpu-cluster"
 
