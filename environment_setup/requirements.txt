@@ -1,0 +1,1 @@
+keras<=2.3.1pandasmatplotlibopencv-pythonazure-storage-blob==2.1.0tensorflow-gpu==2.0.0azuremlazureml-coreazureml-dataprepazureml-dataprep[fuse]azureml-pipelinescikit-learn==0.22.1
