@@ -2,7 +2,7 @@
 from azureml.core import Workspace
 import os, json, sys
 import azureml.core
-from azureml.core.authentication import AzureCliAuthentication
+from azureml.core import Experiment
 from azureml.core.authentication import ServicePrincipalAuthentication
 
 
@@ -31,6 +31,7 @@ try:
         resource_group=resource_group,
         auth=az_sp
     )
+    print("Existing workspace obtained")
 
 except:
     # this call might take a minute or two.
@@ -52,5 +53,4 @@ print(ws.name, ws.resource_group, ws.location, ws.subscription_id, sep="\n")
 
 experiment_name = 'XRayML_AzureDevOps'
 
-from azureml.core import Experiment
 exp = Experiment(workspace=ws, name=experiment_name)

@@ -1,15 +1,15 @@
 from azureml.core.runconfig import RunConfiguration
-from azureml.core import Experiment
-from azureml.core import ScriptRunConfig
-import json
-from azureml.core.authentication import AzureCliAuthentication
+from azureml.core import Experiment,ScriptRunConfig
+from azureml.core.authentication import ServicePrincipalAuthentication
+import json,os
 from azureml.core import Workspace,Datastore
 from azureml.pipeline.core import Pipeline, PipelineParameter, PipelineData
-from azureml.pipeline.steps import PythonScriptStep
-import os
-from azureml.pipeline.steps import EstimatorStep
+from azureml.pipeline.steps import PythonScriptStep,EstimatorStep
 from azureml.train.dnn import TensorFlow
+from azureml.core.compute import ComputeTarget, AmlCompute
+from azureml.core.compute_target import ComputeTargetException
 
+#######################################################################################################
 with open("./configuration/config.json") as f:
     config = json.load(f)
 
@@ -18,16 +18,21 @@ resource_group = config["resource_group"]
 subscription_id = config["subscription_id"]
 location = config["location"]
 
+sp_key= config["sp_key"]
+sp_app_id= config["sp_app_id"]
+sp_tenant_id= config["sp_tenant_id"]
+
 #cli_auth = AzureCliAuthentication()
 
+az_sp = ServicePrincipalAuthentication(sp_tenant_id, sp_app_id, sp_key)
 
 # Get workspace
 #ws = Workspace.from_config(auth=cli_auth)
 ws = Workspace.get(
         name=workspace_name,
         subscription_id=subscription_id,
-        resource_group=resource_group
-        #auth=cli_auth
+        resource_group=resource_group,
+        auth=az_sp
     )
 
 # Attach Experiment
@@ -39,14 +44,36 @@ print(exp.name, exp.workspace.name, sep="\n")
 run_config_user_managed = RunConfiguration()
 run_config_user_managed.environment.python.user_managed_dependencies = True
 
-
-
 print("Pipeline SDK-specific imports completed")
+#######################################################################################################
+# Ceate GPU cluster for training
 
-#ws = Workspace.from_config()
+gpu_cluster_name = "gpu-cluster"
+
+try:
+    GPU_compute_target = ComputeTarget(workspace=ws, name=gpu_cluster_name)
+    print('Found existing GPU compute target')
+except ComputeTargetException:
+    print('Creating a new GPU compute target...')
+    compute_config = AmlCompute.provisioning_configuration(vm_size='STANDARD_NC6', 
+                                                           max_nodes=4)
+
+    # create the cluster
+    GPU_compute_target = ComputeTarget.create(ws, gpu_cluster_name, compute_config)
+
+    # can poll for a minimum number of nodes and for a specific timeout. 
+    # if no min node count is provided it uses the scale settings for the cluster
+    GPU_compute_target.wait_for_completion(show_output=True, min_node_count=None, timeout_in_minutes=10)
+
+# use get_status() to get a detailed status for the current cluster. 
+print(GPU_compute_target.get_status().serialize())
+
+#######################################################################################################
+#Creating dataset reference
 datastore = Datastore.get(ws,"xray_datastore")
 
 PreProcessingData = PipelineData("PreProcessingData", datastore=datastore)
+#######################################################################################################
 
 est = TensorFlow(source_directory = './scripts', 
                     compute_target = GPU_compute_target,
@@ -65,7 +92,7 @@ est_step = EstimatorStep(name="Estimator_Train",
 
 
 run = exp.submit(est_step)
-
+#######################################################################################################
 # Shows output of the run on stdout.
 run.wait_for_completion(show_output=True, wait_post_processing=True)
 
