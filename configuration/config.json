@@ -3,7 +3,8 @@
     "resource_group": "ML_Evaluation",
     "workspace_name": "ML_Evaluation",
 	"location": "eastus",
-	"sp_key": "kD9Tt422R-sS-a_3HZh2s9s8PEm2i_.L2Q",
-	"sp_app_id": "eaa6c4b4-35e1-42c4-a4bd-fa1d6171c59c",
+	"sp_key": "~8BkI5HSmBq_mb96qaxfHLsdkhj-u6V_fT",
+	"sp_app_id": "6614bef7-748c-41d5-bc6c-543a0f4ce04d",
 	"sp_tenant_id": "71e34cb8-3a56-4fd5-a259-4acadab6e4ac"
+	
 }
