@@ -2,5 +2,8 @@
     "subscription_id": "a67d1d17-c1aa-4c65-a847-1770fb7aab5d",
     "resource_group": "ML_Evaluation",
     "workspace_name": "ML_Evaluation",
-	"location": "eastus"
+	"location": "eastus",
+	"sp_key": "kD9Tt422R-sS-a_3HZh2s9s8PEm2i_.L2Q",
+	"sp_app_id": "eaa6c4b4-35e1-42c4-a4bd-fa1d6171c59c",
+	"sp_tenant_id": "71e34cb8-3a56-4fd5-a259-4acadab6e4ac"
 }

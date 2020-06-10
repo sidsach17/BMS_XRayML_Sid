@@ -3,6 +3,8 @@ from azureml.core import Workspace
 import os, json, sys
 import azureml.core
 from azureml.core.authentication import AzureCliAuthentication
+from azureml.core.authentication import ServicePrincipalAuthentication
+
 
 print("SDK Version:", azureml.core.VERSION)
 # print('current dir is ' +os.curdir)
@@ -14,14 +16,20 @@ resource_group = config["resource_group"]
 subscription_id = config["subscription_id"]
 location = config["location"]
 
+sp_key= config["sp_key"]
+sp_app_id= config["sp_app_id"]
+sp_tenant_id= config["sp_tenant_id"]
+
 #cli_auth = AzureCliAuthentication()
+
+az_sp = ServicePrincipalAuthentication(sp_tenant_id, sp_app_id, sp_key)
 
 try:
     ws = Workspace.get(
         name=workspace_name,
         subscription_id=subscription_id,
-        resource_group=resource_group
-        #auth=cli_auth
+        resource_group=resource_group,
+        auth=az_sp
     )
 
 except:
@@ -32,8 +40,8 @@ except:
         subscription_id=subscription_id,
         resource_group=resource_group,
         # create_resource_group=True,
-        location=location
-        #auth=cli_auth
+        location=location,
+        auth=az_sp
 
     )
 
