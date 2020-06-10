@@ -7,30 +7,48 @@ trigger:
 - master
 
 pool:
-  vmImage: 'ubuntu-latest'
-strategy:
-  matrix:
-    Python27:
-      python.version: '2.7'
-    Python35:
-      python.version: '3.5'
-    Python36:
-      python.version: '3.6'
-    Python37:
-      python.version: '3.7'
-
+  name: Azure Pipelines
 steps:
 - task: UsePythonVersion@0
+  displayName: 'Use Python 3.6'
   inputs:
-    versionSpec: '$(python.version)'
-  displayName: 'Use Python $(python.version)'
+    versionSpec: 3.6
 
-- script: |
-    python -m pip install --upgrade pip
-    pip install -r requirements.txt
-  displayName: 'Install dependencies'
+- task: Bash@3
+  displayName: 'Environment Setup'
+  inputs:
+    targetType: filePath
+    filePath: './environment_setup/install_requirements.sh'
 
-- script: |
-    pip install pytest pytest-azurepipelines
-    pytest
-  displayName: 'pytest'
+- task: AzureCLI@2
+  displayName: 'Workspace Setup'
+  inputs:
+    azureSubscription: 'BMS_XRay_MLOps_SP'
+    scriptType: batch
+    scriptLocation: inlineScript
+    inlineScript: 'python service/code/WorkSpace.py'
+
+- task: AzureCLI@2
+  displayName: 'Data Preprocessing'
+  inputs:
+    azureSubscription: 'BMS_XRay_MLOps_SP'
+    scriptType: batch
+    scriptLocation: inlineScript
+    inlineScript: 'python service/code/DataPreprocessing.py'
+
+- task: AzureCLI@2
+  displayName: Training
+  inputs:
+    azureSubscription: 'BMS_XRay_MLOps_SP'
+    scriptType: batch
+    scriptLocation: inlineScript
+    inlineScript: 'python service/code/Training.py'
+
+- task: AzureCLI@2
+  displayName: 'Model Registration'
+  inputs:
+    azureSubscription: 'BMS_XRay_MLOps_SP'
+    scriptType: batch
+    scriptLocation: inlineScript
+    inlineScript: 'python service/code/ModelRegistering.py'
+

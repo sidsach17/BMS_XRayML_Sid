@@ -9,7 +9,7 @@ from azureml.pipeline.steps import EstimatorStep
 from azureml.train.dnn import TensorFlow
 from azureml.core.compute import ComputeTarget, AmlCompute
 from azureml.core.compute_target import ComputeTargetException
-
+from azureml.core import Dataset
 #######################################################################################################
 with open("./configuration/config.json") as f:
     config = json.load(f)
@@ -78,12 +78,20 @@ register_step = PythonScriptStep(name = "register_step",
                     )
 
 
-run = exp.submit(register_step)
+#######################################################################################################
+pipeline = Pipeline(workspace = ws,steps=[register_step])
+
+#Validate pipeline
+pipeline.validate()
+print("Pipeline validation complete")
+
+#submit Pipeline
+run = exp.submit(pipeline,pipeline_parameters={})
+print("Pipeline is submitted for execution")
 
 #######################################################################################################
-
 # Shows output of the run on stdout.
-run.wait_for_completion(show_output=True, wait_post_processing=True)
+run.wait_for_completion(show_output=True)
 
 # Raise exception if run fails
 if run.get_status() == "Failed":

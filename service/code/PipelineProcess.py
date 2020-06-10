@@ -1,13 +1,14 @@
 from azureml.core.runconfig import RunConfiguration
 from azureml.core import Experiment,ScriptRunConfig
-from azureml.core import Workspace,Datastore
+from azureml.core import Workspace,Datastore,Dataset
 from azureml.pipeline.core import Pipeline, PipelineParameter, PipelineData
-from azureml.pipeline.steps import PythonScriptStep
+from azureml.pipeline.steps import PythonScriptStep,EstimatorStep
 from azureml.core.authentication import ServicePrincipalAuthentication
 from azureml.core.compute import ComputeTarget, AmlCompute
 from azureml.core.compute_target import ComputeTargetException
-from azureml.core import Dataset
 import json,os
+from azureml.train.dnn import TensorFlow
+
 
 #######################################################################################################
 with open("./configuration/config.json") as f:
@@ -68,6 +69,29 @@ except ComputeTargetException:
 print(CPU_compute_target.get_status().serialize())
 
 #######################################################################################################
+# Ceate GPU cluster for training
+
+gpu_cluster_name = "gpu-cluster"
+
+try:
+    GPU_compute_target = ComputeTarget(workspace=ws, name=gpu_cluster_name)
+    print('Found existing GPU compute target')
+except ComputeTargetException:
+    print('Creating a new GPU compute target...')
+    compute_config = AmlCompute.provisioning_configuration(vm_size='STANDARD_NC6', 
+                                                           max_nodes=4)
+
+    # create the cluster
+    GPU_compute_target = ComputeTarget.create(ws, gpu_cluster_name, compute_config)
+
+    # can poll for a minimum number of nodes and for a specific timeout. 
+    # if no min node count is provided it uses the scale settings for the cluster
+    GPU_compute_target.wait_for_completion(show_output=True, min_node_count=None, timeout_in_minutes=10)
+
+# use get_status() to get a detailed status for the current cluster. 
+print(GPU_compute_target.get_status().serialize())
+
+#######################################################################################################
 #Creating dataset reference
 xrayimage_dataset = Dataset.get_by_name(ws, name='xray_image_ds')
 traindata_dataset = Dataset.get_by_name(ws, name='train_data_ds')
@@ -100,34 +124,68 @@ preprocessing_step = PythonScriptStep(name="preprocessing_step",
 print("preprocessing_step")
 
 #######################################################################################################
-pipeline = Pipeline(workspace = ws,steps=[preprocessing_step])
+
+est = TensorFlow(source_directory = './scripts', 
+                    compute_target = GPU_compute_target,
+                    entry_script = "train/estimator_training.py",
+                    pip_packages = ['keras<=2.3.1','matplotlib','opencv-python','azure-storage-blob==2.1.0','tensorflow-gpu==2.0.0'],
+                    conda_packages = ['scikit-learn==0.22.1'],
+                    use_gpu = True )
+
+
+est_step = EstimatorStep(name="Estimator_Train", 
+                         estimator=est, 
+                         estimator_entry_script_arguments=['--PreProcessingData', PreProcessingData],
+                         inputs=[PreProcessingData],
+                         runconfig_pipeline_params=None,
+                         compute_target=compute_target)
+
+
+#######################################################################################################
+
+register_step = PythonScriptStep(name = "register_step",
+                    script_name= "register/estimator_register.py",
+                    runconfig = run_config_user_managed,
+                    source_directory = './scripts',
+                    compute_target=CPU_compute_target 
+                    )
+
+
+#######################################################################################################
+est_step.run_after(preprocessing_step)
+register_step.run_after(est_step)
+
+#Build Pipeline
+pipeline = Pipeline(workspace = ws,steps=[preprocessing_step,est_step,register_step])
 
 #Validate pipeline
 pipeline.validate()
 print("Pipeline validation complete")
 
 #submit Pipeline
-run = exp.submit(pipeline,pipeline_parameters={})
+pipeline_run = exp.submit(pipeline,pipeline_parameters={})
 print("Pipeline is submitted for execution")
 
 #######################################################################################################
 # Shows output of the run on stdout.
-run.wait_for_completion(show_output=True)
+pipeline_run.wait_for_completion(show_output=True)
 
 # Raise exception if run fails
-if run.get_status() == "Failed":
+if pipeline_run.get_status() == "Failed":
     raise Exception(
         "Training on local failed with following run status: {} and logs: \n {}".format(
-            run.get_status(), run.get_details_with_logs()
+            rpipeline_run.get_status(), pipeline_run.get_details_with_logs()
         )
     )
 
 # Writing the run id to /aml_config/run_id.json
 
 run_id = {}
-run_id["run_id"] = run.id
-run_id["experiment_name"] = run.experiment.name
+run_id["run_id"] = pipeline_run.id
+run_id["experiment_name"] = pipeline_run.experiment.name
 with open("./configuration/run_id.json", "w") as outfile:
     json.dump(run_id, outfile)
+
+
     
     
