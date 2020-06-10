@@ -138,7 +138,7 @@ est_step = EstimatorStep(name="Estimator_Train",
                          estimator_entry_script_arguments=['--PreProcessingData', PreProcessingData],
                          inputs=[PreProcessingData],
                          runconfig_pipeline_params=None,
-                         compute_target=compute_target)
+                         compute_target=GPU_compute_target)
 
 
 #######################################################################################################
