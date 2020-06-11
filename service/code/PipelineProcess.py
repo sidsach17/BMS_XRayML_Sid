@@ -8,6 +8,7 @@ from azureml.core.compute import ComputeTarget, AmlCompute
 from azureml.core.compute_target import ComputeTargetException
 import json,os
 from azureml.train.dnn import TensorFlow
+from azureml.core.conda_dependencies import CondaDependencies
 
 
 #######################################################################################################
@@ -43,7 +44,11 @@ print(exp.name, exp.workspace.name, sep="\n")
 
 # Editing a run configuration property on-fly.
 run_config_user_managed = RunConfiguration()
-run_config_user_managed.environment.python.user_managed_dependencies = True
+run_config_user_managed.environment.python.conda_dependencies = CondaDependencies.create(pip_packages = ['keras<=2.3.1','pandas','matplotlib',
+                                                                                        'opencv-python','azure-storage-blob==2.1.0','tensorflow-gpu==2.0.0',
+                                                                                        'azureml','azureml-core','azureml-dataprep',
+                                                                                        'azureml-dataprep[fuse]','azureml-pipeline'])
+#run_config_user_managed.environment.python.user_managed_dependencies = True
 
 print("Pipeline SDK-specific imports completed")
 #######################################################################################################
@@ -107,7 +112,7 @@ PreProcessingData = PipelineData("PreProcessingData", datastore=datastore)
 ####################################################################################################### 
 preprocessing_step = PythonScriptStep(name="preprocessing_step",
                                       script_name="data_preprocess/estimator_data_preprocessing.py", 
-                                      compute_target=CPU_compute_target, 
+                                      compute_target=GPU_compute_target, 
                                       runconfig = run_config_user_managed,
                                       source_directory = './scripts',
                                       inputs=[xrayimage_dataset.as_named_input('xrayimage_dataset').as_mount('/temp/xray_images'),
@@ -147,7 +152,7 @@ register_step = PythonScriptStep(name = "register_step",
                     script_name= "register/estimator_register.py",
                     runconfig = run_config_user_managed,
                     source_directory = './scripts',
-                    compute_target=CPU_compute_target 
+                    compute_target=GPU_compute_target 
                     )
 
 
@@ -174,7 +179,7 @@ pipeline_run.wait_for_completion(show_output=True)
 if pipeline_run.get_status() == "Failed":
     raise Exception(
         "Training on local failed with following run status: {} and logs: \n {}".format(
-            rpipeline_run.get_status(), pipeline_run.get_details_with_logs()
+            pipeline_run.get_status(), pipeline_run.get_details_with_logs()
         )
     )
 
