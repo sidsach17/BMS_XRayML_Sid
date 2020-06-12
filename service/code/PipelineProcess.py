@@ -53,6 +53,7 @@ run_config_user_managed.environment.python.conda_dependencies = CondaDependencie
 print("Pipeline SDK-specific imports completed")
 #######################################################################################################
 # Create CPU cluster for Data preprocessing
+'''
 cpu_cluster_name = "cpu-cluster"
 
 try:
@@ -72,7 +73,7 @@ except ComputeTargetException:
 
 # use get_status() to get a detailed status for the current cluster. 
 print(CPU_compute_target.get_status().serialize())
-
+'''
 #######################################################################################################
 # Ceate GPU cluster for training
 
@@ -109,6 +110,7 @@ testtarget_dataset = Dataset.get_by_name(ws, name='test_target_ds')
 datastore = Datastore.get(ws,"xray_datastore")
 
 PreProcessingData = PipelineData("PreProcessingData", datastore=datastore)
+ModelData = PipelineData("ModelData", datastore=datastore)
 ####################################################################################################### 
 preprocessing_step = PythonScriptStep(name="preprocessing_step",
                                       script_name="data_preprocess/estimator_data_preprocessing.py", 
@@ -152,6 +154,8 @@ register_step = PythonScriptStep(name = "register_step",
                     script_name= "register/estimator_register.py",
                     runconfig = run_config_user_managed,
                     source_directory = './scripts',
+                    arguments=['--ModelData', ModelData], 
+                    outputs = [ModelData],
                     compute_target=GPU_compute_target 
                     )
 
@@ -184,7 +188,16 @@ if pipeline_run.get_status() == "Failed":
     )
 
 # Writing the run id to /aml_config/run_id.json
+'''
+with open(os.path.join(ModelData, 'model.json')) as model_file:
+    modeljson = json.load(model_file)
+    model_json = {}
+    model_json["model_name"] = modeljson['model_name']
+    model_json["model_version"] = modeljson['model_version']
 
+with open("./configuration/model.json", "w") as modelfile:
+    json.dump(model_json, modelfile)
+'''
 run_id = {}
 run_id["run_id"] = pipeline_run.id
 run_id["experiment_name"] = pipeline_run.experiment.name

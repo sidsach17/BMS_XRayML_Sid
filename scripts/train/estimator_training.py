@@ -30,7 +30,7 @@ model_path = 'outputs/'
 ################### Azure ML Service Starts #############################
 parser = argparse.ArgumentParser()
 parser.add_argument('--PreProcessingData', dest='PreProcessingData', required=True)
-parser.add_argument('--epochs', type=int, dest='epochs', help='No. of epochs', default=2)
+parser.add_argument('--epochs', type=int, dest='epochs', help='No. of epochs', default=1)
 parser.add_argument('--batch_size', type=int, dest='batch_size', help='Batch size', default =32)
 parser.add_argument('--learning_rate', type=float, dest='learning_rate', help='learning_rate', default =0.001)
 args = parser.parse_args()
