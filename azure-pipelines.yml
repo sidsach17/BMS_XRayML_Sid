@@ -1,11 +1,3 @@
-# Python package
-# Create and test a Python package on multiple Python versions.
-# Add steps that analyze code, save the dist with the build record, publish to a PyPI-compatible index, and more:
-# https://docs.microsoft.com/azure/devops/pipelines/languages/python
-
-trigger:
-- master
-
 pool:
   name: Azure Pipelines
 steps:
@@ -29,26 +21,18 @@ steps:
     inlineScript: 'python service/code/WorkSpace.py'
 
 - task: AzureCLI@2
-  displayName: 'Data Preprocessing'
+  displayName: 'Azure MLOps'
   inputs:
     azureSubscription: 'BMS_XRay_MLOps_SP'
     scriptType: batch
     scriptLocation: inlineScript
-    inlineScript: 'python service/code/DataPreprocessing.py'
+    inlineScript: 'python service/code/PipelineProcess.py'
 
-- task: AzureCLI@2
-  displayName: Training
+- task: CopyFiles@2
+  displayName: 'Copy Files to: $(Build.ArtifactStagingDirectory)'
   inputs:
-    azureSubscription: 'BMS_XRay_MLOps_SP'
-    scriptType: batch
-    scriptLocation: inlineScript
-    inlineScript: 'python service/code/Training.py'
+    SourceFolder: '$(Build.SourcesDirectory)'
+    TargetFolder: '$(Build.ArtifactStagingDirectory)'
 
-- task: AzureCLI@2
-  displayName: 'Model Registration'
-  inputs:
-    azureSubscription: 'BMS_XRay_MLOps_SP'
-    scriptType: batch
-    scriptLocation: inlineScript
-    inlineScript: 'python service/code/ModelRegistering.py'
-
+- task: PublishBuildArtifacts@1
+  displayName: 'Publish Artifact: drop'
