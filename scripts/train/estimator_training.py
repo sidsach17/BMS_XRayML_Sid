@@ -200,7 +200,7 @@ def train():
     run.parent.upload_file(name = 'outputs/weights.best.dense_generator_callback.hdf5', 
                                    path_or_stream =os.path.join(model_path,'weights.best.dense_generator_callback.hdf5'))
     
-    
+    print("model uploaded to parent")
     ####################Azure ML Service Specific Code###################################
     
     fig1 = plt.figure()

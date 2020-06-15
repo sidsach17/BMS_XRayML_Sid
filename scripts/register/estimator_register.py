@@ -17,7 +17,7 @@ Model_OutputPath=args.ModelData
 run= Run.get_context()
 run_id = run.parent.id
 
-print("model register")
+print("register final model")
 
 parent_run = Run(experiment = run.experiment,run_id=run_id)
 

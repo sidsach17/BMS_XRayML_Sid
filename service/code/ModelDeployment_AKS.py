@@ -45,6 +45,7 @@ ws = Workspace.get(
         auth=az_sp
     )
 #########################################################################################################
+'''
 with open("./configuration/model.json") as modelinput:
     model_json = json.load(modelinput)
 
@@ -54,7 +55,12 @@ model_version=model_json["model_version"]
 model = Model(workspace=ws, name=model_name, version=model_version)
 
 print("model name: ",model_name," model version: ",model_version)
+'''
 
+model_name="MLOps_Model"
+model = Model(workspace=ws, name=model_name)
+
+print("model name: ",model_name)
 #########################################################################################################
 # Choose a name for your GPU cluster
 gpu_cluster_name = "aks-gpu-cluster"
@@ -86,13 +92,13 @@ aks_config = AksWebservice.deploy_configuration(cpu_cores=2,
                                                auth_enabled=True, # this flag generates API keys to secure access
                                                memory_gb=8,
                                                #tags={'name': 'mnist', 'framework': 'Keras'},
-                                               description='mlxrayaks-latest',
-                                               max_request_wait_time=300000,scoring_timeout_ms=300000)
+                                               #max_request_wait_time=300000,scoring_timeout_ms=300000,
+                                               description='X-Ray ML Estimator AKS endpoint')
 
  
 #########################################################################################################
 
-service_name = 'mlops-estimator-model-deployment-aks'
+service_name = 'mlops-estimator-model-aks'
 
 # Remove any existing service under the same name.
 try:

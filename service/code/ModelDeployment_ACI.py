@@ -41,6 +41,8 @@ ws = Workspace.get(
         resource_group=resource_group,
         auth=az_sp
     )
+
+###################################################################################################
 '''
 with open("./configuration/model.json") as modelinput:
     model_json = json.load(modelinput)
@@ -54,6 +56,8 @@ model = Model(workspace=ws, name=model_name)
 
 print("model name: ",model_name)
 
+###################################################################################################
+
 deployment_env = Environment.from_conda_specification(name="deployment_env", file_path="./configuration/deployment_env.yml")
 inference_config = InferenceConfig(entry_script="./scripts/score/score.py", environment=deployment_env)
 
@@ -63,7 +67,9 @@ aciconfig = AciWebservice.deploy_configuration(cpu_cores=2,
                                                auth_enabled=True, # this flag generates API keys to secure access
                                                memory_gb=8,
                                                #tags={'name': 'mnist', 'framework': 'Keras'},
-                                               description='mlxray')
+                                               description='X-Ray ML Estimator ACI endpoint')
+
+###################################################################################################
 
 service_name = 'mlops-estimator-model-aci'
 
@@ -79,14 +85,16 @@ service = Model.deploy(workspace=ws,
                            inference_config=inference_config, 
                            deployment_config=aciconfig)
 
- 
+###################################################################################################
 
 service.wait_for_deployment(True)
 print(service.state)
 
 print(service.scoring_uri)
+'''
 score_uri = {}
 score_uri["scoring_uri"] = service.scoring_uri
 
 with open("./configuration/scoring_uri_aci.json", "w") as outfile:
     json.dump(score_uri, outfile)
+'''

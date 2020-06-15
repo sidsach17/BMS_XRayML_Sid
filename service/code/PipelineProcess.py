@@ -113,10 +113,10 @@ PreProcessingData = PipelineData("PreProcessingData", datastore=datastore)
 ModelData = PipelineData("ModelData", datastore=datastore)
 ####################################################################################################### 
 preprocessing_step = PythonScriptStep(name="preprocessing_step",
-                                      script_name="data_preprocess/estimator_data_preprocessing.py", 
+                                      script_name="estimator_data_preprocessing.py", 
                                       compute_target=GPU_compute_target, 
                                       runconfig = run_config_user_managed,
-                                      source_directory = './scripts',
+                                      source_directory = './scripts/data_preprocess',
                                       inputs=[xrayimage_dataset.as_named_input('xrayimage_dataset').as_mount('/temp/xray_images'),
                                               traindata_dataset.as_named_input('traindata_dataset'),
                                               validdata_dataset.as_named_input('validdata_dataset'),
@@ -132,9 +132,9 @@ print("preprocessing_step")
 
 #######################################################################################################
 
-est = TensorFlow(source_directory = './scripts', 
+est = TensorFlow(source_directory = './scripts/train', 
                     compute_target = GPU_compute_target,
-                    entry_script = "train/estimator_training.py",
+                    entry_script = "estimator_training.py",
                     pip_packages = ['keras<=2.3.1','matplotlib','opencv-python','azure-storage-blob==2.1.0','tensorflow-gpu==2.0.0'],
                     conda_packages = ['scikit-learn==0.22.1'],
                     use_gpu = True )
@@ -151,9 +151,9 @@ est_step = EstimatorStep(name="Estimator_Train",
 #######################################################################################################
 
 register_step = PythonScriptStep(name = "register_step",
-                    script_name= "register/estimator_register.py",
+                    script_name= "estimator_register.py",
                     runconfig = run_config_user_managed,
-                    source_directory = './scripts',
+                    source_directory = './scripts/register',
                     arguments=['--ModelData', ModelData], 
                     outputs = [ModelData],
                     compute_target=GPU_compute_target 
@@ -171,6 +171,12 @@ pipeline = Pipeline(workspace = ws,steps=[preprocessing_step,est_step,register_s
 pipeline.validate()
 print("Pipeline validation complete")
 
+
+#Publish the pipeline
+published_pipeline = pipeline.publish(name="MLOps_Pipeline_Estimator", 
+                                    description="MLOps pipeline for estimator",
+                                    continue_on_step_failure=True)
+
 #submit Pipeline
 pipeline_run = exp.submit(pipeline,pipeline_parameters={})
 print("Pipeline is submitted for execution")
@@ -186,6 +192,7 @@ if pipeline_run.get_status() == "Failed":
             pipeline_run.get_status(), pipeline_run.get_details_with_logs()
         )
     )
+
 
 # Writing the run id to /aml_config/run_id.json
 '''
